@@ -2,18 +2,23 @@
 class Gitup{
 
     private $commitHash = array();
+    private $dataFile;
+    private $data;
 
     private $config = array(
-        'IDENTIFYCODE' => 'git-up',
-        'MODE' => 'post',
+        'ACCESSTOKEN_VALUE' => 'git-up',
+        'ACCESSTOKEN_KEY' => 'accesstoken',
+        'MODE' => 'POST',
         'REP_ROOT' => './',
-        'PUSH_PATH' => 'localhost',
+        'PUSH_URL' => 'localhost',
         'SERVER_ROOT' => __DIR__,
         'POSTDATA_PATH' => __DIR__,
+        'POSTDATA_FILENAME' => 'gitup-post.data',
         'ACCEPTDATA_PATH' => __DIR__,
+        'ACCEPTDATA_FILENAME' => 'gitup-accept.data',
     );
 
-    function __construct($config = null){
+    public function __construct($config = null){
         if(is_array($config)){
             foreach($config as $key => $val){
                 $upperKey = strtoupper($key);
@@ -39,16 +44,39 @@ class Gitup{
 
     public function init(){
         $this->initDir();
-        $this->config['IDENTIFYCODE'] = sha1($this->config['IDENTIFYCODE']);
-        if($this->config['MODE'] == 'post'){
-            if(file_exists($this->config['REP_ROOT'])){
-                if(!$this->getGitLog())throw new Exception('there is no information using "git log",please check the repository path!');
-            }else{
-                throw new Exception('No Such Directory:' . $this->config['REP_ROOT']);
+        if(($this->config['MODE'] = strtoupper($this->config['MODE'])) == 'POST'){
+            file_exists($this->config['REP_ROOT']) or $this->throwException('No Such Directory: ' . $this->config['REP_ROOT']);
+            file_exists($this->config['POSTDATA_PATH']) or $this->throwException('No Such Directory: ' . $this->config['POSTDATA_PATH']);
+            if(!$this->readData()){
+                $this->getGitLog() or $this->throwException('there is no information using "git log",please check the repository path!');
             }
         }else{
-        
+            $this->config['MODE'] = 'ACCEPT';
+            file_exists($this->config['SERVER_ROOT']) or $this->throwException('No Such Directory: ' . $this->config['SERVER_ROOT']);
+            file_exists($this->config['ACCEPTDATA_PATH']) or $this->throwException('No Such Directory: ' . $this->config['SERVER_ROOT']);
         }
+        $this->dataFile = $this->config[$this->config['MODE'] . 'DATA_PATH'] . $this->config[$this->config['MODE'] . 'DATA_FILENAME'];
+    }
+
+    public function checkAccessToken(){
+        if(isset($_POST[$this->config['ACCESSTOKEN_KEY']])){
+            return $_POST[$this->config['ACCESSTOKEN_KEY']] == sha1($this->config['ACCESSTOKEN_VALUE']);
+        }else{
+            return false;
+        }
+    }
+
+    protected function readData(){
+        if(file_exists($this->dataFile) && ($data = @file_get_contents($this->dataFile))){
+            return $this->data = unserialize($data);
+        }else{
+            return false;
+        }
+    }
+
+    protected function writeData($data){
+        $data = serialize($data);
+        return @file_put_contents($this->dataFile, $data);
     }
 
     protected function initDir($key = null){
@@ -59,13 +87,13 @@ class Gitup{
         'ACCEPTDATA_PATH',
         );
         if(is_null($key)){
-            foreach($urlParameter as $val){
+            foreach($dirParameter as $val){
                 $this->config[$val] = rtrim($this->config[$val], '/') . '/';
             }
             return true;
         }else{
             $key = strtoupper($key);
-            if(in_array($key,$urlParameter)){
+            if(in_array($key,$dirParameter)){
                 $this->config[$key] = rtrim($this->config[$key], '/') . '/';
                 return true;
             }else{
@@ -80,22 +108,23 @@ class Gitup{
         foreach($execResult as $key => $val){
             if(strpos($val,'commit ') === 0){
                 $commitStr = explode(' ',$val)[1];
-                preg_match('/^[a-z\d]{40}$/',$commitStr) and $this->commitHash[] = $commitStr;
+                preg_match('/^[a-fA-F\d]{40}$/',$commitStr) and $this->commitHash[] = $commitStr;
             }
         }
         return count($this->commitHash) ? : false;
     }
 
-    public function checkServer(){
+    protected function checkServer(){
         $postData = array('a' => 'a');
-        return $this->curlToServer($postData);
+        return $this->postToServer($postData);
     }
 
-    private function curlToServer(array $data,$file = null){
-        $ch = curl_init();
+    protected function postToServer(array $data,$file = null){
         is_null($file) or $data['upload_file'] = new CURLFile($file);//required PHP version >= 5.5
+        $data[$this->config['ACCESSTOKEN_KEY']] = sha1($this->config['ACCESSTOKEN_VALUE']);
+        $ch = curl_init();
         $options = array(
-            CURLOPT_URL => $this->config['PUSH_PATH'],
+            CURLOPT_URL => $this->config['PUSH_URL'],
             CURLOPT_SAFE_UPLOAD => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
@@ -108,6 +137,10 @@ class Gitup{
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         return $httpCode == '200' ? $curlResult : false;
+    }
+
+    protected function throwException($msg){
+        throw new Exception($msg);
     }
 
 }
