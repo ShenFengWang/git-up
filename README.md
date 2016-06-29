@@ -1,5 +1,5 @@
 # git-up
-Using php and git to updating the program to server when you have no permission for using ssh or ftp
+Using php and git to updating files to server when you have no permission for using ssh or ftp
 
 ##How to use
 both local and server:
