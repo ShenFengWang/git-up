@@ -3,15 +3,10 @@ Using php and git to updating the program to server when you have no permission 
 
 ##How to use
 both local and server:
-<code>
-include 'gitup.class.php';
-
-$gitup = new Gitup();
-
-$gitup->init();
-
-$gitup->run();
-</code>
+<p>include 'gitup.class.php';</p>
+<p>$gitup = new Gitup();</p>
+<p>$gitup->init();</p>
+<p>$gitup->run();</p>
 
 ##Configuration
      ACCESSTOKEN_VALUE   => the value of accesstoken before encryption
