@@ -5,8 +5,11 @@ Using php and git to updating the program to server when you have no permission 
 both local and server:
 <code>
 include 'gitup.class.php';
+
 $gitup = new Gitup();
+
 $gitup->init();
+
 $gitup->run();
 </code>
 
