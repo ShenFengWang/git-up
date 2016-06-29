@@ -4,10 +4,10 @@ Using php and git to updating the program to server when you have no permission 
 ##How to use
 both local and server:
 <code>
-include 'gitup.class.php';<br>
-$gitup = new Gitup();<br>
-$gitup->init();<br>
-$gitup->run();<br>
+include 'gitup.class.php';
+$gitup = new Gitup();
+$gitup->init();
+$gitup->run();
 </code>
 
 ##Configuration
