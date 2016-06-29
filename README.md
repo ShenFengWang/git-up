@@ -2,12 +2,12 @@
 Using php and git to updating the program to server when you have no permission for using ssh or ftp
 
 ##How to use
-<code>
 both local and server:
-include 'gitup.class.php';
-$gitup = new Gitup();
-$gitup->init();
-$gitup->run();
+<code>
+include 'gitup.class.php';<br>
+$gitup = new Gitup();<br>
+$gitup->init();<br>
+$gitup->run();<br>
 </code>
 
 ##Configuration
